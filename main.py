@@ -1,50 +1,28 @@
 import streamlit as st
-import pandas as pd
-import io
+from PIL import Image
+import pickle as pkl
+import numpy as np
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+class_list = {'0': 'Female', '1': 'Male'}
 
-st.title("Data exploration 📊")
+st.title('Gender detection based on Vietnamese full name 🙆‍♀️🔎🙆')
 
-st.header("Upload data file")
-data_file = st.file_uploader('Choose a csv file', type=(['.csv']))
+image = Image.open('name.png')
+st.image(image)
 
-if data_file is not None:
-  df = pd.read_csv(data_file)
-  st.header("Show data")
-  st.dataframe(df)
+input_ec = open('ec_vinames.pkl', 'rb')
+encoder = pkl.load(input_ec)
 
-  st.header("Descriptive statistics")
-  st.table(df.describe())
+input_md = open('lrc_vinames.pkl', 'rb')
+model = pkl.load(input_md)
 
-  st.header('Show data infomation')
+st.header('Write a Vietnamese full name')
+txt = st.text_area('', '')
 
-  buffer = io.StringIO()
-  df.info(buf=buffer)
-  st.text(buffer.getvalue())
+if txt != '':
+    if st.button('Predict'):
+        feature_vector = encoder.transform([txt])
+        label = str((model.predict(feature_vector))[0])
 
-  st.header('Visualize each attribute')
-  for col in list(df.columns):
-    fig, ax = plt.subplots()
-    ax.hist(df[col], bins = 20)
-    plt.xlabel(col)
-    plt.ylabel('Quanlity')
-    st.pyplot(fig)
-
-  st.header('Show correlation between variable')
-  fig, ax = plt.subplots()
-  sns.heatmap(df.corr(method='pearson'), ax=ax, vmax=1, square=True, annot=True, cmap='Purples')
-  st.write(fig)
-  
-  st.header('Show relationship between variable')
-  output = st.radio('Choose a dependent variable', df.columns)
-  for col in list(df.columns):
-    if col!=output:
-      fig, ax = plt.subplots()
-      ax.scatter(x=df[col], y=df[output])
-      plt.xlabel(col)
-      plt.ylabel(output)
-      st.pyplot(fig)
-
-
+        st.header('Result')
+        st.text(class_list[label])
